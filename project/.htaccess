@@ -1,0 +1,24 @@
+# .htaccess — root security hardening for Apache/cPanel/XAMPP deployment
+
+# Disable directory listing
+Options -Indexes
+
+# Protect includes/ and database/ from direct web access
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^includes/ - [F,L]
+    RewriteRule ^database/ - [F,L]
+    RewriteRule ^logs/ - [F,L]
+</IfModule>
+
+# Prevent access to hidden/config files
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# Basic security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
