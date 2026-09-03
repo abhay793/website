@@ -4,13 +4,15 @@
 FROM php:8.2-apache
 
 # Install system dependencies and PHP extensions
+# libpq-dev is needed for pdo_pgsql
 RUN apt-get update && apt-get install -y \
     libzip-dev \
+    libpq-dev \
     zip \
     unzip \
     git \
     curl \
-    && docker-php-ext-install pdo pdo_mysql mysqli zip \
+    && docker-php-ext-install pdo pdo_pgsql zip \
     && a2enmod rewrite headers \
     && rm -rf /var/lib/apt/lists/*
 

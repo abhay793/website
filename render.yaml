@@ -1,5 +1,6 @@
 # Render Infrastructure as Code configuration
 # This file defines the services needed for the PHP application
+# FREE TIER: Web Service (spins down) + PostgreSQL (1GB, 90 days)
 
 services:
   # Web Service - PHP Application
@@ -8,7 +9,6 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile.render
     # Pre-deploy command to initialize database schema
-    # This runs before the new version is deployed
     preDeployCommand: "php init-db.php"
     envVars:
       - key: APP_DEBUG
@@ -17,25 +17,36 @@ services:
         value: "Ocktova"
       - key: SESSION_TIMEOUT_SECONDS
         value: "1800"
-      # Database credentials - SET THESE IN RENDER DASHBOARD AFTER DEPLOY
-      # Use an external MySQL provider (PlanetScale, Railway, Aiven, Supabase, etc.)
+      # Database credentials - AUTO-INJECTED from PostgreSQL service below
       - key: DB_HOST
-        value: "" # e.g., "aws.connect.psdb.cloud" or "mysql-xxxx.railway.app"
+        fromDatabase:
+          name: meridian-db
+          property: host
       - key: DB_PORT
-        value: "3306"
+        fromDatabase:
+          name: meridian-db
+          property: port
       - key: DB_NAME
-        value: "corporate_site"
+        fromDatabase:
+          name: meridian-db
+          property: database
       - key: DB_USER
-        value: "" # your database username
+        fromDatabase:
+          name: meridian-db
+          property: user
       - key: DB_PASS
-        value: "" # your database password
-      - key: DB_CHARSET
-        value: "utf8mb4"
-    # Health check endpoint
+        fromDatabase:
+          name: meridian-db
+          property: password
+      - key: DB_DRIVER
+        value: "pgsql"
     healthCheckPath: /index.php
-    # Auto-deploy on push to main
     autoDeploy: true
 
-# NOTE: Render's managed database (pserv) only supports PostgreSQL.
-# For MySQL, use an external provider and set the env vars above in Render Dashboard.
-# See EXTERNAL_MYSQL_PROVIDERS.md for options.
+  # Managed PostgreSQL Database (Render FREE TIER)
+  - type: pserv
+    name: meridian-db
+    plan: free
+    version: "16"
+    databaseName: corporate_site
+    user: db_username

@@ -62,6 +62,8 @@ define('DB_NAME', $_ENV['DB_NAME'] ?? $_SERVER['DB_NAME'] ?? 'corporate_site');
 define('DB_USER', $_ENV['DB_USER'] ?? $_SERVER['DB_USER'] ?? 'db_username');
 define('DB_PASS', $_ENV['DB_PASS'] ?? $_SERVER['DB_PASS'] ?? 'db_password');
 define('DB_CHARSET', $_ENV['DB_CHARSET'] ?? $_SERVER['DB_CHARSET'] ?? 'utf8mb4');
+// Database driver: 'mysql' or 'pgsql' (PostgreSQL)
+define('DB_DRIVER', $_ENV['DB_DRIVER'] ?? $_SERVER['DB_DRIVER'] ?? 'mysql');
 
 //
 // Application constants
@@ -97,18 +99,34 @@ function getDbConnection(): PDO
     static $pdo = null;
 
     if ($pdo === null) {
-        $dsn = 'mysql:host=' . DB_HOST . ';port=' . DB_PORT . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET;
-
-        $options = [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES   => false,
-            // Enable persistent connections for better performance on Render
-            PDO::ATTR_PERSISTENT         => true,
-        ];
+        // Build DSN based on driver
+        $driver = DB_DRIVER;
+        if ($driver === 'pgsql' || $driver === 'postgresql') {
+            $dsn = 'pgsql:host=' . DB_HOST . ';port=' . DB_PORT . ';dbname=' . DB_NAME;
+            // PostgreSQL uses client_encoding instead of charset in DSN
+            $options = [
+                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES   => false,
+                PDO::ATTR_PERSISTENT         => true,
+            ];
+        } else {
+            // Default to MySQL
+            $dsn = 'mysql:host=' . DB_HOST . ';port=' . DB_PORT . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET;
+            $options = [
+                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES   => false,
+                PDO::ATTR_PERSISTENT         => true,
+            ];
+        }
 
         try {
             $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+            // Set client encoding for PostgreSQL
+            if ($driver === 'pgsql' || $driver === 'postgresql') {
+                $pdo->exec('SET client_encoding TO ' . DB_CHARSET);
+            }
         } catch (PDOException $e) {
             error_log('Database connection failed: ' . $e->getMessage());
             http_response_code(500);

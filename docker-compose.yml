@@ -12,38 +12,44 @@ services:
       - ./project:/var/www/html
     depends_on:
       - db
-    # Installs the mysqli/pdo_mysql extension PHP needs to talk to MySQL
+    # Installs the pdo_pgsql extension PHP needs to talk to PostgreSQL
     command: >
-      bash -c "docker-php-ext-install pdo pdo_mysql mysqli
+      bash -c "docker-php-ext-install pdo pdo_pgsql
       && apache2-foreground"
+    environment:
+      - DB_DRIVER=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=corporate_site
+      - DB_USER=postgres
+      - DB_PASS=postgres
+      - DB_CHARSET=utf8
 
-  # MySQL — this is your actual database storage
+  # PostgreSQL — this is your actual database storage
   db:
-    image: mysql:8.0
+    image: postgres:16
     container_name: meridian_db
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_DATABASE: corporate_site
-      MYSQL_USER: db_username
-      MYSQL_PASSWORD: db_password
+      POSTGRES_DB: corporate_site
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - db_data:/var/lib/mysql
+      - db_data:/var/lib/postgresql/data
       - ./project/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
 
-  # phpMyAdmin — visual tool to view/manage your database in browser
-  phpmyadmin:
-    image: phpmyadmin
-    container_name: meridian_phpmyadmin
+  # pgAdmin — visual tool to view/manage your database in browser
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: meridian_pgadmin
     restart: always
     ports:
       - "8081:80"
     environment:
-      PMA_HOST: db
-      PMA_USER: db_username
-      PMA_PASSWORD: db_password
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
     depends_on:
       - db
 
