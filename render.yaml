@@ -7,7 +7,7 @@ services:
   - type: web
     name: meridian-web
     runtime: docker
-    dockerfilePath: ./Dockerfile.render
+    dockerfilePath: ./Dockerfile
     # Pre-deploy command to initialize database schema
     preDeployCommand: "php init-db.php"
     envVars:
