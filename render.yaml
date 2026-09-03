@@ -47,6 +47,4 @@ services:
   - type: pserv
     name: meridian-db
     plan: free
-    version: "16"
-    databaseName: corporate_site
-    user: db_username
+    # version, databaseName, and user are optional - Render will use defaults
