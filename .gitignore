@@ -1,0 +1,60 @@
+# Git ignore file for PHP project on Render
+
+# Environment files - NEVER commit these!
+.env
+.env.local
+.env.*.local
+
+# Dependency directories
+vendor/
+node_modules/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Log files
+logs/*.log
+*.log
+
+# Database
+*.sql
+*.sqlite
+*.db
+
+# Cache and temporary files
+cache/
+tmp/
+temp/
+*.cache
+
+# Composer
+composer.phar
+composer.lock
+
+# Docker
+docker-compose.override.yml
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Test coverage
+coverage/
+.phpunit.result.cache
+
+# PHP CS Fixer
+.php-cs-fixer.cache
+
+# Render specific
+.render/

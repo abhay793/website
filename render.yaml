@@ -1,0 +1,61 @@
+# Render Infrastructure as Code configuration
+# This file defines the services needed for the PHP application
+
+services:
+  # Web Service - PHP Application
+  - type: web
+    name: meridian-web
+    runtime: docker
+    dockerfilePath: ./Dockerfile.render
+    # Pre-deploy command to initialize database schema
+    # This runs before the new version is deployed
+    preDeployCommand: "php init-db.php"
+    envVars:
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_NAME
+        value: "Ocktova"
+      - key: SESSION_TIMEOUT_SECONDS
+        value: "1800"
+      # Database credentials will be injected from the database service
+      - key: DB_HOST
+        fromDatabase:
+          name: meridian-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: meridian-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: meridian-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: meridian-db
+          property: user
+      - key: DB_PASS
+        fromDatabase:
+          name: meridian-db
+          property: password
+    # Health check endpoint
+    healthCheckPath: /index.php
+    # Auto-deploy on push to main
+    autoDeploy: true
+
+  # Managed MySQL Database
+  - type: pserv
+    name: meridian-db
+    plan: starter
+    # MySQL version
+    version: "8.0"
+    # Database name
+    databaseName: corporate_site
+    # User will be auto-generated
+    user: db_username
+
+# Optional: Add a cron job for database backups or maintenance
+# cronJobs:
+#   - name: db-backup
+#     schedule: "0 2 * * *"  # Daily at 2 AM
+#     command: "mysqldump -h $DB_HOST -u $DB_USER -p$DB_PASS $DB_NAME > backup.sql"

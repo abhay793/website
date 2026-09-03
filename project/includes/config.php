@@ -3,17 +3,41 @@
  * config.php
  * Central configuration file for database connection and application settings.
  *
- * IMPORTANT: Update the constants below with your live server credentials
- * before deploying to production. Never commit real credentials to a
- * public repository.
+ * IMPORTANT: This file uses environment variables for configuration.
+ * Set these in your hosting platform (Render, cPanel, etc.) or in a .env file for local development.
+ * Never commit real credentials to a public repository.
  */
+
+//
+// Load environment variables from .env file if it exists (for local development)
+//
+$envPath = __DIR__ . '/../../.env';
+if (file_exists($envPath)) {
+    $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (str_starts_with(trim($line), '#')) continue;
+        if (strpos($line, '=') !== false) {
+            list($key, $value) = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+            // Remove quotes if present
+            $value = trim($value, '"\'');
+            if (!array_key_exists($key, $_SERVER) && !array_key_exists($key, $_ENV)) {
+                putenv("$key=$value");
+                $_ENV[$key] = $value;
+                $_SERVER[$key] = $value;
+            }
+        }
+    }
+}
 
 //
 // Environment / Error Reporting
 //
 
 // Set to false in production to avoid leaking stack traces to end users.
-define('APP_DEBUG', false);
+// Can be overridden via APP_DEBUG environment variable
+define('APP_DEBUG', filter_var($_ENV['APP_DEBUG'] ?? $_SERVER['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN));
 
 if (APP_DEBUG) {
     error_reporting(E_ALL);
@@ -29,22 +53,21 @@ ini_set('error_log', __DIR__ . '/../logs/app_error.log');
 
 //
 // Database credentials
+// All values can be overridden via environment variables
+// Render automatically provides these when using a managed database
 //
-
-// NOTE: 'db' matches the service name defined in docker-compose.yml
-// (was 'localhost' when using XAMPP — Docker containers are separate
-// machines talking over a network, so they use the service name instead)
-define('DB_HOST', 'db');
-define('DB_NAME', 'corporate_site');
-define('DB_USER', 'db_username');
-define('DB_PASS', 'db_password');
-define('DB_CHARSET', 'utf8mb4');
+define('DB_HOST', $_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? 'localhost');
+define('DB_PORT', $_ENV['DB_PORT'] ?? $_SERVER['DB_PORT'] ?? '3306');
+define('DB_NAME', $_ENV['DB_NAME'] ?? $_SERVER['DB_NAME'] ?? 'corporate_site');
+define('DB_USER', $_ENV['DB_USER'] ?? $_SERVER['DB_USER'] ?? 'db_username');
+define('DB_PASS', $_ENV['DB_PASS'] ?? $_SERVER['DB_PASS'] ?? 'db_password');
+define('DB_CHARSET', $_ENV['DB_CHARSET'] ?? $_SERVER['DB_CHARSET'] ?? 'utf8mb4');
 
 //
 // Application constants
 //
-define('APP_NAME', 'Ocktova');
-define('SESSION_TIMEOUT_SECONDS', 1800); // 30 minutes of inactivity
+define('APP_NAME', $_ENV['APP_NAME'] ?? $_SERVER['APP_NAME'] ?? 'Ocktova');
+define('SESSION_TIMEOUT_SECONDS', (int)($_ENV['SESSION_TIMEOUT_SECONDS'] ?? $_SERVER['SESSION_TIMEOUT_SECONDS'] ?? 1800)); // 30 minutes of inactivity
 
 //
 // Secure session configuration (must run before session_start())
@@ -55,7 +78,11 @@ if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.cookie_samesite', 'Lax');
 
     // Enable the secure flag automatically when served over HTTPS.
-    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+    // Render terminates SSL at the load balancer, so check for X-Forwarded-Proto
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+    
+    if ($isHttps) {
         ini_set('session.cookie_secure', '1');
     }
 
@@ -70,12 +97,14 @@ function getDbConnection(): PDO
     static $pdo = null;
 
     if ($pdo === null) {
-        $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET;
+        $dsn = 'mysql:host=' . DB_HOST . ';port=' . DB_PORT . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET;
 
         $options = [
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES   => false,
+            // Enable persistent connections for better performance on Render
+            PDO::ATTR_PERSISTENT         => true,
         ];
 
         try {
