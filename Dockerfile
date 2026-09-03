@@ -43,4 +43,4 @@ EXPOSE 10000
 
 # Use the PORT environment variable that Render provides
 # Apache will be configured to listen on this port
-CMD ["bash", "-c", "sed -i 's/Listen 80/Listen ${PORT:-10000}/' /etc/apache2/ports.conf && apache2-foreground"]
+CMD ["bash", "-c", "sed -i \"s/Listen 80/Listen ${PORT:-10000}/\" /etc/apache2/ports.conf && apache2-foreground"]
