@@ -1,7 +1,6 @@
-version: '3.8'
+version: "3.8"
 
 services:
-
   # PHP + Apache — runs your .php files (client/, includes/, etc.)
   web:
     image: php:8.2-apache

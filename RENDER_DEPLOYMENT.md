@@ -90,7 +90,7 @@ The service includes a health check at `/index.php`. Render will monitor this en
    The database initialization creates a demo client:
    - Client ID: `democlient`
    - Password: `Demo@12345`
-   
+
    **Change or remove this account immediately after deployment!**
 
 2. **Set Up Custom Domain (Optional):**
@@ -106,6 +106,7 @@ The service includes a health check at `/index.php`. Render will monitor this en
 ### Database Connection Issues
 
 If the app can't connect to the database:
+
 1. Check the database service is running
 2. Verify environment variables in the web service
 3. Check logs: Dashboard → Web Service → Logs
@@ -113,6 +114,7 @@ If the app can't connect to the database:
 ### Build Failures
 
 If Docker build fails:
+
 1. Check the build logs in Render Dashboard
 2. Ensure `Dockerfile.render` and `apache.render.conf` are in the repo root
 3. Verify the `project/` directory structure matches
@@ -120,6 +122,7 @@ If Docker build fails:
 ### Session Issues
 
 If sessions don't persist:
+
 1. Verify `session.cookie_secure` is set correctly (config.php handles this)
 2. Check that Render's load balancer passes `X-Forwarded-Proto`
 
@@ -162,6 +165,7 @@ docker-compose up -d
 - **Custom Domains:** Free on Render
 
 For production, consider upgrading to paid plans for:
+
 - Always-on service (no spin-down)
 - More resources
 - Better performance
