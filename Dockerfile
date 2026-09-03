@@ -24,8 +24,8 @@ ENV APACHE_LOG_DIR=/var/log/apache2
 ENV APACHE_LOCK_DIR=/var/lock/apache2
 ENV APACHE_PID_FILE=/var/run/apache2.pid
 
-# Copy custom Apache configuration
-COPY apache.conf /etc/apache2/sites-available/000-default.conf
+# Copy custom Apache configuration template
+COPY apache.conf /etc/apache2/sites-available/000-default.conf.template
 
 # Set working directory
 WORKDIR /var/www/html
@@ -42,5 +42,5 @@ RUN mkdir -p /var/www/html/logs \
 EXPOSE 10000
 
 # Use the PORT environment variable that Render provides
-# Apache will be configured to listen on this port
-CMD ["bash", "-c", "sed -i \"s/Listen 80/Listen ${PORT:-10000}/\" /etc/apache2/ports.conf && apache2-foreground"]
+# Substitute {{PORT}} placeholder in Apache config, then start Apache
+CMD ["bash", "-c", "PORT_VAL=${PORT:-10000} && sed \"s/{{PORT}}/$PORT_VAL/g\" /etc/apache2/sites-available/000-default.conf.template > /etc/apache2/sites-available/000-default.conf && sed -i \"s/Listen 80/Listen $PORT_VAL/\" /etc/apache2/ports.conf && apache2-foreground"]
