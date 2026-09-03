@@ -17,45 +17,25 @@ services:
         value: "Ocktova"
       - key: SESSION_TIMEOUT_SECONDS
         value: "1800"
-      # Database credentials will be injected from the database service
+      # Database credentials - SET THESE IN RENDER DASHBOARD AFTER DEPLOY
+      # Use an external MySQL provider (PlanetScale, Railway, Aiven, Supabase, etc.)
       - key: DB_HOST
-        fromDatabase:
-          name: meridian-db
-          property: host
+        value: "" # e.g., "aws.connect.psdb.cloud" or "mysql-xxxx.railway.app"
       - key: DB_PORT
-        fromDatabase:
-          name: meridian-db
-          property: port
+        value: "3306"
       - key: DB_NAME
-        fromDatabase:
-          name: meridian-db
-          property: database
+        value: "corporate_site"
       - key: DB_USER
-        fromDatabase:
-          name: meridian-db
-          property: user
+        value: "" # your database username
       - key: DB_PASS
-        fromDatabase:
-          name: meridian-db
-          property: password
+        value: "" # your database password
+      - key: DB_CHARSET
+        value: "utf8mb4"
     # Health check endpoint
     healthCheckPath: /index.php
     # Auto-deploy on push to main
     autoDeploy: true
 
-  # Managed MySQL Database
-  - type: pserv
-    name: meridian-db
-    plan: starter
-    # MySQL version
-    version: "8.0"
-    # Database name
-    databaseName: corporate_site
-    # User will be auto-generated
-    user: db_username
-
-# Optional: Add a cron job for database backups or maintenance
-# cronJobs:
-#   - name: db-backup
-#     schedule: "0 2 * * *"  # Daily at 2 AM
-#     command: "mysqldump -h $DB_HOST -u $DB_USER -p$DB_PASS $DB_NAME > backup.sql"
+# NOTE: Render's managed database (pserv) only supports PostgreSQL.
+# For MySQL, use an external provider and set the env vars above in Render Dashboard.
+# See EXTERNAL_MYSQL_PROVIDERS.md for options.
